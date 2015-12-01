@@ -2,7 +2,7 @@ module FsSnip.Storage.Local
 
 open System
 open System.IO
-
+open Chessie.ErrorHandling
 // -------------------------------------------------------------------------------------------------
 // Local file system storag - the `functions` value should be compatibl with `azure.fs`
 // -------------------------------------------------------------------------------------------------
@@ -11,8 +11,11 @@ let private indexFile = __SOURCE_DIRECTORY__ + "/../../../data/index.json"
 
 let readIndex () = 
   File.ReadAllText(indexFile)
-let readFile file = 
-  File.ReadAllText(sprintf "%s/../../../data/%s" __SOURCE_DIRECTORY__ file)
+let readFile file =
+  try
+    Ok (File.ReadAllText(sprintf "%s/../../../data/%s" __SOURCE_DIRECTORY__ file) , ["ok"])
+  with
+  | _ -> Bad [""]
 let saveIndex json = 
   File.WriteAllText(indexFile, json)
 let writeFile file data = 

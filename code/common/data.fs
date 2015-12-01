@@ -7,6 +7,7 @@ open Microsoft.WindowsAzure.Storage.Blob
 open FsSnip.Utils
 open FsSnip.Storage
 open FSharp.Data
+open Chessie.ErrorHandling
 
 // -------------------------------------------------------------------------------------------------
 // Data access. We keep an in-memory index (saved as JSON) with all the meta-data about snippets.
@@ -52,21 +53,21 @@ let readSnippets () =
 
 let mutable snippets, publicSnippets = readSnippets ()
 
+let test input = 
+  match input with
+  | Ok (x,a) -> Some(x)
+  | Bad _ -> None
 
+ 
 let loadSnippetInternal folder id revision = 
   let id = demangleId id
   publicSnippets
   |> Seq.tryFind (fun s -> s.ID = id)
-  |> function
-     | Some snippetInfo ->
-       try
-         match revision with Latest -> snippetInfo.Versions - 1 | Revision r -> r
-         |> sprintf "%s/%d/%d" folder id
-         |> Storage.readFile
-        |> Some
-       with
-       | _ -> None
-     | None -> None 
+  |> Trial.failIfNone ""
+  |> Trial.bind (fun snippetInfo -> 
+    let r = match revision with Latest -> snippetInfo.Versions - 1 | Revision r -> r
+    Storage.readFile (sprintf "%s/%d/%d" folder id r) )
+  |> test
 
 let loadSnippet id revision = 
   loadSnippetInternal "formatted" id revision 

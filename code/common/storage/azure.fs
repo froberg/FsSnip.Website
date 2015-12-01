@@ -4,7 +4,7 @@ open System
 open System.IO
 open FSharp.Azure.StorageTypeProvider
 open Microsoft.WindowsAzure.Storage
-
+open Chessie.ErrorHandling
 // -------------------------------------------------------------------------------------------------
 // Azure storage - the connection string is provided by environment variable, which is configured 
 // in the Azure portal. The `functions` value should be compatible with one in `local.fs`
@@ -24,9 +24,9 @@ let private readBlobText containerName blobPath =
     if container.Exists() then
         let blob = container.GetBlockBlobReference(blobPath)
         if blob.Exists() then
-            blob.DownloadText(System.Text.Encoding.UTF8)
-        else failwith "blob not found"
-    else failwith "container not found"
+            Ok (blob.DownloadText(System.Text.Encoding.UTF8), [])
+        else Bad ["blob not found"] //None //failwith "blob not found"
+    else Bad ["blob not found"] //None //failwith "container not found"
 
 let private readBlobStream containerName blobPath =
     let stream = new MemoryStream();
@@ -45,7 +45,10 @@ let private writeBlobText containerName blobPath text =
     else failwith (sprintf "container not found %s" containerName)
 
 let readIndex () =
-  readBlobText "data" "index.json"
+  ""
+//   match readBlobText "data" "index.json" with
+//   | Ok x, _ -> x
+//   | Bad _ -> "" 
 let saveIndex json = 
   writeBlobText "data" "index.json" json
 let readFile file =
